@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SUPERSET_CMD="${1:-/usr/bin/superset}"
-if [ ! -x "$SUPERSET_CMD" ]; then
-  SUPERSET_CMD="/app/.venv/bin/superset"
-fi
+# startup.sh (snippet)
+SUPERSET_CMD="/usr/bin/superset"
+if [ ! -x "$SUPERSET_CMD" ]; then SUPERSET_CMD="/app/.venv/bin/superset"; fi
+
 
 : "${SUPERSET_ADMIN_USER:=admin}"
 : "${SUPERSET_ADMIN_PASSWORD:=admin123}"
