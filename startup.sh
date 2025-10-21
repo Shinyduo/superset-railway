@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# startup.sh (snippet)
 SUPERSET_CMD="/usr/bin/superset"
-if [ ! -x "$SUPERSET_CMD" ]; then
-  SUPERSET_CMD="/app/.venv/bin/superset"
-fi
+if [ ! -x "$SUPERSET_CMD" ]; then SUPERSET_CMD="/app/.venv/bin/superset"; fi
+
 
 echo "🔧 Superset version:"
 $SUPERSET_CMD version || true
