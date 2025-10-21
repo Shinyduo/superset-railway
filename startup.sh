@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Defaults (Railway will inject DATABASE_URL / REDIS_URL if services attached)
-: "${SUPERSET_PORT:=8088}"
+SUPERSET_CMD="/usr/bin/superset"
+if [ ! -x "$SUPERSET_CMD" ]; then
+  SUPERSET_CMD="/app/.venv/bin/superset"
+fi
 
 echo "🔧 Superset version:"
-superset version || true
+$SUPERSET_CMD version || true
 
-# One-time bootstrap (idempotent; safe to re-run)
 echo "🚀 Bootstrapping Superset..."
-/app/bootstrap.sh
+/app/bootstrap.sh "$SUPERSET_CMD"
 
-echo "🌐 Starting Superset on 0.0.0.0:${SUPERSET_PORT}"
-exec superset run -h 0.0.0.0 -p "${SUPERSET_PORT}"
+echo "🌐 Starting Superset..."
+exec $SUPERSET_CMD run -h 0.0.0.0 -p "${SUPERSET_PORT:-8088}"
