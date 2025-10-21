@@ -1,17 +1,24 @@
-# Use the official Apache Superset image as a base
 FROM apache/superset:latest
 USER root
 
-# Environment
+# Where Superset reads its config
 ENV SUPERSET_CONFIG_PATH=/app/superset_config.py
 ENV FLASK_ENV=production
 
-# Install Postgres driver + optional Google connectors
-RUN pip install --no-cache-dir psycopg2-binary \
-    google google-api-core google-api-python-client \
-    google-cloud-bigquery google-cloud-storage
+# Install Postgres driver **inside Superset's venv** + optional Google libs
+RUN /app/.venv/bin/pip install --no-cache-dir psycopg2-binary==2.9.9 \
+ && /app/.venv/bin/pip install --no-cache-dir \
+      google google-api-core google-api-python-client \
+      google-cloud-bigquery google-cloud-storage \
+ # sanity check: prove the driver is importable by the same Python Superset uses
+ && /app/.venv/bin/python - <<'PY'
+import sys
+print("PYTHON:", sys.executable)
+import psycopg2
+print("psycopg2:", psycopg2.__version__)
+PY
 
-# Copy configuration and helper scripts
+# Copy config + scripts
 COPY superset_config.py /app/superset_config.py
 COPY startup.sh /app/startup.sh
 COPY bootstrap.sh /app/bootstrap.sh
