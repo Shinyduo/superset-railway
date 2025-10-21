@@ -1,45 +1,25 @@
 #!/usr/bin/env bash
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+set -euo pipefail
 
-set -eo pipefail
+: "${SUPERSET_ADMIN_USER:=admin}"
+: "${SUPERSET_ADMIN_PASSWORD:=admin123}"
+: "${SUPERSET_ADMIN_EMAIL:=admin@example.com}"
+: "${SUPERSET_ADMIN_FIRST_NAME:=Admin}"
+: "${SUPERSET_ADMIN_LAST_NAME:=User}"
 
-REQUIREMENTS_LOCAL="/app/docker/requirements-local.txt"
-# If Cypress run – overwrite the password for admin and export env variables
-if [ "$CYPRESS_CONFIG" == "true" ]; then
-    export SUPERSET_CONFIG=tests.integration_tests.superset_test_config
-    export SUPERSET_TESTENV=true
-    export SUPERSET__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@db:5432/superset
-fi
-#
-# Make sure we have dev requirements installed
-#
-if [ -f "${REQUIREMENTS_LOCAL}" ]; then
-  echo "Installing local overrides at ${REQUIREMENTS_LOCAL}"
-  pip install --no-cache-dir -r "${REQUIREMENTS_LOCAL}"
-else
-  echo "Skipping local overrides"
-fi
+echo "⏳ Running DB migrations..."
+superset db upgrade
 
-#
-# playwright is an optional package - run only if it is installed
-#
-if command -v playwright > /dev/null 2>&1; then
-  playwright install-deps
-  playwright install chromium
-fi
+# Create admin user if it doesn't exist (ignore error if it does)
+echo "👤 Ensuring admin user exists: ${SUPERSET_ADMIN_USER}"
+superset fab create-admin \
+  --username "${SUPERSET_ADMIN_USER}" \
+  --firstname "${SUPERSET_ADMIN_FIRST_NAME}" \
+  --lastname "${SUPERSET_ADMIN_LAST_NAME}" \
+  --email "${SUPERSET_ADMIN_EMAIL}" \
+  --password "${SUPERSET_ADMIN_PASSWORD}" || true
 
+echo "🧰 Initializing default roles, permissions, and examples setting..."
+superset init
+
+echo "✅ Bootstrap completed."
